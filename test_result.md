@@ -182,7 +182,7 @@
           agent: "main"
           comment: "Implemented verbose logging system with keyboard listener. Users can press Enter during scan to toggle verbose mode. Verbose mode shows detailed request/response information, wordlist loading progress, and system messages. Added -v/--verbose flag for initial verbose mode."
 
-  - task: "Add wordlist size options (small/medium/large)"
+  - task: "Add automatic results saving with structured folder and naming"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -192,7 +192,7 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Added --wordlist-size option with small/medium/large choices. Small loads ~500 words, medium ~5000 words, large ~20000+ words. Each size has different GitHub wordlist sources with appropriate limits to control scan scope and time."
+          comment: "Implemented automatic results saving to 'aifuzz_results/' folder with filename format 'domain_mode_timestamp.format'. Enhanced JSON format includes comprehensive scan metadata. TXT format includes scan information header. All results are automatically saved even without -o parameter. Supports custom output paths while maintaining folder structure."
 
 ## metadata:
   created_by: "main_agent"
