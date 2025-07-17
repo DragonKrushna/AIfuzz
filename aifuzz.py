@@ -1544,6 +1544,7 @@ Examples:
   aifuzz -u https://example.com -m param -w custom_params.txt
   aifuzz -u https://example.com -m hybrid -c 200 --ai-analysis
   aifuzz -u https://example.com -m dir --wordlist-size small -v
+  aifuzz --wizard  # Interactive wizard mode
   aifuzz --config  # Update configuration
 
 Results are automatically saved to aifuzz_results/ folder with filename format:
@@ -1561,6 +1562,7 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
     parser.add_argument("-d", "--delay", type=float, default=0.0, 
                        help="Delay between requests in seconds (default: 0.0)")
     parser.add_argument("-w", "--wordlist", help="Custom wordlist file")
+    parser.add_argument("--github-wordlist", nargs="+", help="GitHub wordlist repository URLs")
     parser.add_argument("-e", "--extensions", nargs="+", default=[], 
                        help="File extensions to test (e.g., php js html)")
     parser.add_argument("-s", "--status-codes", nargs="+", type=int, 
@@ -1578,12 +1580,44 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
                        default="medium", help="Wordlist size from GitHub (default: medium)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
     parser.add_argument("--config", action="store_true", help="Update configuration")
+    parser.add_argument("--wizard", action="store_true", help="Interactive wizard mode")
     parser.add_argument("--user-agent", default="AiDirFuzz/1.1", help="Custom User-Agent")
     parser.add_argument("--ai-batch-size", type=int, default=10, help="AI analysis batch size (default: 10)")
     parser.add_argument("--ai-batch-delay", type=float, default=2.0, help="AI analysis batch delay (default: 2.0)")
     parser.add_argument("--version", action="version", version="AiDirFuzz 1.1.0")
     
     args = parser.parse_args()
+    
+    # Handle wizard mode
+    if args.wizard:
+        wizard_config = run_wizard_mode()
+        if not wizard_config:
+            return
+        
+        # Convert wizard config to args-like object
+        args.url = wizard_config['url']
+        args.mode = wizard_config['mode']
+        args.concurrent = wizard_config['concurrent']
+        args.timeout = wizard_config['timeout']
+        args.delay = wizard_config['delay']
+        args.wordlist_size = wizard_config['wordlist_size']
+        args.wordlist = wizard_config['custom_wordlist']
+        args.github_wordlist = wizard_config['github_repos'] if wizard_config['github_repos'] else None
+        args.extensions = wizard_config['extensions']
+        args.format = wizard_config['output_format']
+        args.output = wizard_config['output_file']
+        args.verbose = wizard_config['verbose']
+        args.no_ai = not wizard_config['ai_analysis']
+        args.ai_batch_size = wizard_config['ai_batch_size']
+        args.ai_batch_delay = wizard_config['ai_batch_delay']
+        args.proxy = wizard_config['proxy']
+        args.no_ssl_verify = not wizard_config['ssl_verify']
+        
+        # Convert custom headers from dict to list format
+        if wizard_config['custom_headers']:
+            args.headers = [f"{k}:{v}" for k, v in wizard_config['custom_headers'].items()]
+        else:
+            args.headers = None
     
     # Handle config update
     if args.config:
@@ -1592,7 +1626,7 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
     
     # Check if URL is provided
     if not args.url:
-        console.print("[red]Error: Target URL is required. Use -u or --url[/red]")
+        console.print("[red]Error: Target URL is required. Use -u or --url, or run with --wizard[/red]")
         parser.print_help()
         return
     
@@ -1645,6 +1679,11 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
     async def run_scan():
         try:
             async with AiDirFuzz(scan_config) as scanner:
+                # Add GitHub wordlist repositories if specified
+                if args.github_wordlist:
+                    for repo_url in args.github_wordlist:
+                        scanner.wordlist_fetcher.add_custom_repo(repo_url)
+                
                 results = await scanner.run_scan()
                 
                 # Display results
@@ -1674,13 +1713,16 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
         console.print("[yellow]Installing required packages...[/yellow]")
         os.system("pip install aiohttp")
     
+    # Improved emergentintegrations installation
     try:
         from emergentintegrations.llm.chat import LlmChat
     except ImportError:
         console.print("[yellow]Installing AI integration package...[/yellow]")
-        result = os.system("pip install emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/ --upgrade")
+        result = os.system("pip install emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/ --upgrade --no-cache-dir")
         if result != 0:
             console.print("[red]Failed to install emergentintegrations. Continuing without AI features.[/red]")
+            # Force disable AI analysis if installation fails
+            scan_config.ai_analysis = False
     
     # Run the scanner
     if sys.platform == "win32":
