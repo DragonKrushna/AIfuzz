@@ -1267,48 +1267,270 @@ def update_config():
         json.dump(config, f, indent=2)
     
     console.print(f"[green]Configuration updated successfully![/green]")
-    """Update configuration file"""
-    config_dir = Path.home() / ".aifuzz"
-    config_dir.mkdir(exist_ok=True)
-    config_file = config_dir / "config.json"
+
+def run_wizard_mode():
+    """Interactive wizard mode for configuring scan parameters"""
+    console.print("[bold blue]AiFuzz Wizard Mode[/bold blue]")
+    console.print("[yellow]This wizard will help you configure your scan parameters[/yellow]\n")
     
-    # Load existing config
-    config = {}
-    if config_file.exists():
+    # Target URL
+    url = input("Enter target URL: ").strip()
+    if not url:
+        console.print("[red]Target URL is required[/red]")
+        return None
+    
+    # Scan Mode
+    console.print("\n[bold]Scan Modes:[/bold]")
+    modes = ["dir", "param", "api", "hybrid"]
+    for i, mode in enumerate(modes, 1):
+        descriptions = {
+            "dir": "Directory and file discovery",
+            "param": "Parameter fuzzing",
+            "api": "API endpoint discovery",
+            "hybrid": "All modes combined"
+        }
+        console.print(f"{i}. {mode} - {descriptions[mode]}")
+    
+    while True:
         try:
-            with open(config_file, 'r') as f:
-                config = json.load(f)
-        except:
-            pass
+            mode_choice = input("Select scan mode (1-4, default=1): ").strip()
+            if not mode_choice:
+                mode_choice = "1"
+            mode_idx = int(mode_choice) - 1
+            if 0 <= mode_idx < len(modes):
+                mode = modes[mode_idx]
+                break
+            else:
+                console.print("[red]Invalid choice. Please select 1-4.[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
     
-    console.print("[bold yellow]Update AiDirFuzz Configuration[/bold yellow]")
-    console.print(f"Current API Key: {config.get('gemini_api_key', 'Not set')[:10]}...")
+    # Concurrent requests
+    while True:
+        try:
+            concurrent = input("Concurrent requests (default=50): ").strip()
+            if not concurrent:
+                concurrent = 50
+            else:
+                concurrent = int(concurrent)
+            if concurrent > 0:
+                break
+            else:
+                console.print("[red]Concurrent requests must be positive[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
     
-    new_api_key = input("New Gemini API Key (press Enter to keep current): ").strip()
-    if new_api_key:
-        config["gemini_api_key"] = new_api_key
+    # Timeout
+    while True:
+        try:
+            timeout = input("Request timeout in seconds (default=10): ").strip()
+            if not timeout:
+                timeout = 10
+            else:
+                timeout = int(timeout)
+            if timeout > 0:
+                break
+            else:
+                console.print("[red]Timeout must be positive[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
     
-    print("Available Gemini models:")
-    models = [
-        "gemini-2.5-flash-preview-04-17",
-        "gemini-2.5-pro-preview-05-06", 
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
-    ]
+    # Delay
+    while True:
+        try:
+            delay = input("Delay between requests in seconds (default=0.0): ").strip()
+            if not delay:
+                delay = 0.0
+            else:
+                delay = float(delay)
+            if delay >= 0:
+                break
+            else:
+                console.print("[red]Delay must be non-negative[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
     
-    for i, model in enumerate(models, 1):
-        print(f"{i}. {model}")
+    # Wordlist size
+    console.print("\n[bold]Wordlist Sizes:[/bold]")
+    sizes = ["small", "medium", "large"]
+    for i, size in enumerate(sizes, 1):
+        descriptions = {
+            "small": "Fast scan with fewer words",
+            "medium": "Balanced scan",
+            "large": "Comprehensive scan (slower)"
+        }
+        console.print(f"{i}. {size} - {descriptions[size]}")
     
-    model_choice = input(f"Select model (1-{len(models)}, press Enter for current): ").strip()
-    if model_choice.isdigit() and 1 <= int(model_choice) <= len(models):
-        config["gemini_model"] = models[int(model_choice) - 1]
+    while True:
+        try:
+            size_choice = input("Select wordlist size (1-3, default=2): ").strip()
+            if not size_choice:
+                size_choice = "2"
+            size_idx = int(size_choice) - 1
+            if 0 <= size_idx < len(sizes):
+                wordlist_size = sizes[size_idx]
+                break
+            else:
+                console.print("[red]Invalid choice. Please select 1-3.[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
     
-    with open(config_file, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Custom wordlist
+    custom_wordlist = input("\nCustom wordlist file path (optional): ").strip()
+    if custom_wordlist and not os.path.exists(custom_wordlist):
+        console.print(f"[yellow]Warning: Custom wordlist file not found: {custom_wordlist}[/yellow]")
+        custom_wordlist = None
     
-    console.print(f"[green]Configuration updated successfully![/green]")
+    # GitHub wordlist repos
+    github_repos = []
+    while True:
+        repo = input("GitHub wordlist repo URL (optional, press Enter to skip): ").strip()
+        if not repo:
+            break
+        github_repos.append(repo)
+        console.print(f"[green]Added: {repo}[/green]")
+    
+    # Extensions
+    extensions = []
+    ext_input = input("File extensions to test (space-separated, e.g., php js html): ").strip()
+    if ext_input:
+        extensions = ext_input.split()
+    
+    # Output format
+    console.print("\n[bold]Output Formats:[/bold]")
+    formats = ["json", "csv", "txt"]
+    for i, fmt in enumerate(formats, 1):
+        console.print(f"{i}. {fmt}")
+    
+    while True:
+        try:
+            format_choice = input("Select output format (1-3, default=1): ").strip()
+            if not format_choice:
+                format_choice = "1"
+            format_idx = int(format_choice) - 1
+            if 0 <= format_idx < len(formats):
+                output_format = formats[format_idx]
+                break
+            else:
+                console.print("[red]Invalid choice. Please select 1-3.[/red]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
+    
+    # Custom output file
+    output_file = input("Custom output file path (optional): ").strip()
+    
+    # Verbose mode
+    verbose = input("Enable verbose mode? (y/N): ").strip().lower() in ['y', 'yes', '1']
+    
+    # AI Analysis
+    ai_analysis = input("Enable AI analysis? (y/N): ").strip().lower() in ['y', 'yes', '1']
+    
+    # AI Batch settings (if AI is enabled)
+    ai_batch_size = 10
+    ai_batch_delay = 2.0
+    if ai_analysis:
+        while True:
+            try:
+                batch_size = input("AI batch size (default=10): ").strip()
+                if not batch_size:
+                    ai_batch_size = 10
+                else:
+                    ai_batch_size = int(batch_size)
+                if ai_batch_size > 0:
+                    break
+                else:
+                    console.print("[red]Batch size must be positive[/red]")
+            except ValueError:
+                console.print("[red]Invalid input. Please enter a number.[/red]")
+        
+        while True:
+            try:
+                batch_delay = input("AI batch delay in seconds (default=2.0): ").strip()
+                if not batch_delay:
+                    ai_batch_delay = 2.0
+                else:
+                    ai_batch_delay = float(batch_delay)
+                if ai_batch_delay >= 0:
+                    break
+                else:
+                    console.print("[red]Batch delay must be non-negative[/red]")
+            except ValueError:
+                console.print("[red]Invalid input. Please enter a number.[/red]")
+    
+    # Custom headers
+    custom_headers = {}
+    console.print("\n[bold]Custom Headers (optional):[/bold]")
+    console.print("[dim]Format: Header-Name:Header-Value[/dim]")
+    while True:
+        header = input("Enter custom header (press Enter to skip): ").strip()
+        if not header:
+            break
+        if ":" in header:
+            key, value = header.split(":", 1)
+            custom_headers[key.strip()] = value.strip()
+            console.print(f"[green]Added header: {key.strip()} = {value.strip()}[/green]")
+        else:
+            console.print("[red]Invalid format. Use Header-Name:Header-Value[/red]")
+    
+    # Proxy
+    proxy = input("Proxy URL (optional): ").strip()
+    
+    # SSL verification
+    ssl_verify = not (input("Disable SSL verification? (y/N): ").strip().lower() in ['y', 'yes', '1'])
+    
+    # Summary
+    console.print("\n[bold green]Configuration Summary:[/bold green]")
+    console.print(f"Target URL: {url}")
+    console.print(f"Mode: {mode}")
+    console.print(f"Concurrent requests: {concurrent}")
+    console.print(f"Timeout: {timeout}s")
+    console.print(f"Delay: {delay}s")
+    console.print(f"Wordlist size: {wordlist_size}")
+    if custom_wordlist:
+        console.print(f"Custom wordlist: {custom_wordlist}")
+    if github_repos:
+        console.print(f"GitHub repos: {', '.join(github_repos)}")
+    if extensions:
+        console.print(f"Extensions: {', '.join(extensions)}")
+    console.print(f"Output format: {output_format}")
+    if output_file:
+        console.print(f"Output file: {output_file}")
+    console.print(f"Verbose mode: {verbose}")
+    console.print(f"AI analysis: {ai_analysis}")
+    if ai_analysis:
+        console.print(f"AI batch size: {ai_batch_size}")
+        console.print(f"AI batch delay: {ai_batch_delay}s")
+    if custom_headers:
+        console.print(f"Custom headers: {len(custom_headers)} headers")
+    if proxy:
+        console.print(f"Proxy: {proxy}")
+    console.print(f"SSL verification: {ssl_verify}")
+    
+    # Confirm
+    if not input("\nProceed with this configuration? (Y/n): ").strip().lower() in ['n', 'no', '0']:
+        return {
+            'url': url,
+            'mode': mode,
+            'concurrent': concurrent,
+            'timeout': timeout,
+            'delay': delay,
+            'wordlist_size': wordlist_size,
+            'custom_wordlist': custom_wordlist,
+            'github_repos': github_repos,
+            'extensions': extensions,
+            'output_format': output_format,
+            'output_file': output_file,
+            'verbose': verbose,
+            'ai_analysis': ai_analysis,
+            'ai_batch_size': ai_batch_size,
+            'ai_batch_delay': ai_batch_delay,
+            'custom_headers': custom_headers,
+            'proxy': proxy,
+            'ssl_verify': ssl_verify
+        }
+    else:
+        console.print("[yellow]Configuration cancelled[/yellow]")
+        return None
 
 def main():
     """Main function"""
