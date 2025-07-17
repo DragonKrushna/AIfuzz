@@ -188,6 +188,9 @@
         - working: true
           agent: "main"
           comment: "Enhanced verbose mode to show detailed logs for 4 seconds when Enter is pressed, then automatically switch back to progress bar. Added threading timer for automatic verbose mode disabling. Tested and working correctly."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Verbose mode working correctly - shows detailed logs with timestamps when -v flag is used. Interactive verbose mode (pressing Enter during scan) implemented with 4-second timer functionality. Logs include scanner initialization, wordlist loading, and request details."
 
   - task: "Add graceful shutdown with results saving"
     implemented: true
