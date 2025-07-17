@@ -954,15 +954,60 @@ class AiDirFuzz:
         return results
     
     def save_results(self, results: List[ScanResult]):
-        """Save results to file"""
-        if not self.config.output_file:
+        """Save results to file with automatic folder structure and naming"""
+        if not results:
+            self.logger.log("No results to save", "warning")
             return
         
+        # Create results directory
+        results_dir = Path("aifuzz_results")
+        results_dir.mkdir(exist_ok=True)
+        
+        # Generate filename if not provided
+        if not self.config.output_file:
+            # Sanitize URL for filename
+            url_parsed = urlparse(self.config.target_url)
+            domain = url_parsed.netloc or url_parsed.path
+            domain = re.sub(r'[^\w\-_.]', '_', domain)
+            
+            # Create timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Create filename: domain_mode_timestamp.format
+            filename = f"{domain}_{self.config.mode}_{timestamp}.{self.config.output_format}"
+            self.config.output_file = results_dir / filename
+        else:
+            # Use provided filename but ensure it's in the results directory
+            if not Path(self.config.output_file).is_absolute():
+                self.config.output_file = results_dir / self.config.output_file
+        
         try:
-            self.logger.log(f"Saving results to {self.config.output_file}")
+            self.logger.log(f"Saving {len(results)} results to {self.config.output_file}")
+            
+            # Ensure parent directory exists
+            Path(self.config.output_file).parent.mkdir(parents=True, exist_ok=True)
+            
             if self.config.output_format == "json":
+                # Enhanced JSON format with metadata
+                output_data = {
+                    "scan_metadata": {
+                        "target_url": self.config.target_url,
+                        "scan_mode": self.config.mode,
+                        "scan_date": datetime.now().isoformat(),
+                        "wordlist_size": self.config.wordlist_size,
+                        "concurrent_requests": self.config.concurrent_requests,
+                        "total_requests": self.completed_requests,
+                        "interesting_results": len(results),
+                        "scan_duration": time.time() - self.start_time if self.start_time else 0,
+                        "ai_analysis_enabled": bool(self.ai_analyzer),
+                        "version": "1.1.0"
+                    },
+                    "results": [asdict(result) for result in results]
+                }
+                
                 with open(self.config.output_file, 'w') as f:
-                    json.dump([asdict(result) for result in results], f, indent=2)
+                    json.dump(output_data, f, indent=2)
+                    
             elif self.config.output_format == "csv":
                 with open(self.config.output_file, 'w', newline='') as f:
                     writer = csv.DictWriter(f, fieldnames=[
@@ -973,14 +1018,33 @@ class AiDirFuzz:
                     writer.writeheader()
                     for result in results:
                         writer.writerow(asdict(result))
+                        
             elif self.config.output_format == "txt":
                 with open(self.config.output_file, 'w') as f:
+                    # Write header with scan info
+                    f.write(f"AiDirFuzz Scan Results\n")
+                    f.write(f"Target: {self.config.target_url}\n")
+                    f.write(f"Mode: {self.config.mode}\n")
+                    f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write(f"Total Results: {len(results)}\n")
+                    f.write("-" * 80 + "\n\n")
+                    
+                    # Write results
                     for result in results:
-                        f.write(f"{result.status_code} {result.method} {result.url}\n")
+                        f.write(f"{result.status_code} {result.method} {result.url}")
+                        if result.vulnerability_score > 0:
+                            f.write(f" [Score: {result.vulnerability_score:.1f}]")
+                        f.write("\n")
+                        
+                        if result.ai_analysis:
+                            f.write(f"  AI Analysis: {result.ai_analysis}\n")
+                        f.write("\n")
             
             console.print(f"[green]Results saved to: {self.config.output_file}[/green]")
+            console.print(f"[blue]Results directory: {results_dir.absolute()}[/blue]")
             
         except Exception as e:
+            self.logger.log(f"Failed to save results: {str(e)}", "error")
             console.print(f"[red]Failed to save results: {str(e)}[/red]")
     
     def display_results(self, results: List[ScanResult]):
