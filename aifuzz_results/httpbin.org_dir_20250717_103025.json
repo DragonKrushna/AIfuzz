@@ -1,0 +1,40 @@
+{
+  "scan_metadata": {
+    "target_url": "https://httpbin.org",
+    "scan_mode": "dir",
+    "scan_date": "2025-07-17T10:30:25.753590",
+    "wordlist_size": "medium",
+    "concurrent_requests": 2,
+    "total_requests": 5,
+    "interesting_results": 2,
+    "scan_duration": 0.2247459888458252,
+    "ai_analysis_enabled": false,
+    "version": "1.1.0"
+  },
+  "results": [
+    {
+      "url": "https://httpbin.org/json",
+      "method": "GET",
+      "status_code": 200,
+      "content_length": 429,
+      "content_type": "application/json",
+      "response_time": 155.17234802246094,
+      "redirect_url": "https://httpbin.org/json",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T10:30:25.684858"
+    },
+    {
+      "url": "https://httpbin.org/get",
+      "method": "GET",
+      "status_code": 200,
+      "content_length": 297,
+      "content_type": "application/json",
+      "response_time": 32.112836837768555,
+      "redirect_url": "https://httpbin.org/get",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T10:30:25.714043"
+    }
+  ]
+}
