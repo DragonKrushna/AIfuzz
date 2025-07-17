@@ -143,6 +143,9 @@
         - working: true
           agent: "main"
           comment: "Fixed progress bar calculation and display. Now shows real-time progress (e.g., 176/500 35%) by properly updating progress after each individual request. Added refresh rate configuration for better visual feedback."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Progress bar working correctly - shows real-time progress like '175/500 35%' during scans. Verified with multiple concurrent request values (5, 10, 20) and different wordlist sizes."
 
   - task: "Add --wizard flag for interactive configuration"
     implemented: true
