@@ -32,7 +32,7 @@ else
     exit 1
 fi
 
-echo "✓ Python $python_version detected"
+
 
 # Check if pip is installed
 if ! command -v pip3 &> /dev/null; then
