@@ -876,6 +876,7 @@ class AiDirFuzz:
                 
                 if result and self._is_interesting_result(result):
                     results.append(result)
+                    self.results.append(result)  # Add to main results for graceful shutdown
                 
                 self._update_progress()
                 return result
