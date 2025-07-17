@@ -196,6 +196,8 @@ class VerboseLogger:
         self.verbose = False
         self.log_messages = []
         self.max_log_size = 1000
+        self.verbose_timer = None
+        self.verbose_duration = 4.0  # Show verbose for 4 seconds
         
     def log(self, message: str, level: str = "info"):
         """Log a message with timestamp"""
@@ -212,10 +214,29 @@ class VerboseLogger:
             self.console.print(f"[{color}]{log_entry}[/{color}]")
     
     def toggle_verbose(self):
-        """Toggle verbose mode"""
-        self.verbose = not self.verbose
-        status = "enabled" if self.verbose else "disabled"
-        self.log(f"Verbose mode {status}", "info")
+        """Toggle verbose mode with timer"""
+        if not self.verbose:
+            self.verbose = True
+            self.log("Verbose mode enabled for 4 seconds", "info")
+            self.show_recent_logs(10)
+            
+            # Cancel existing timer
+            if self.verbose_timer:
+                self.verbose_timer.cancel()
+                
+            # Set timer to disable verbose mode
+            self.verbose_timer = threading.Timer(self.verbose_duration, self._disable_verbose)
+            self.verbose_timer.start()
+        else:
+            self._disable_verbose()
+    
+    def _disable_verbose(self):
+        """Disable verbose mode"""
+        self.verbose = False
+        if self.verbose_timer:
+            self.verbose_timer.cancel()
+            self.verbose_timer = None
+        self.log("Verbose mode disabled, returning to progress bar", "info")
         
     def show_recent_logs(self, count: int = 20):
         """Show recent log messages"""
