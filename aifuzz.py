@@ -768,6 +768,10 @@ class AiDirFuzz:
                 
                 if result and self._is_interesting_result(result):
                     results.append(result)
+                    self.results.append(result)  # Add to main results for graceful shutdown
+                
+                # Update progress for directory test
+                self._update_progress()
                 
                 # Test with extensions if provided
                 if self.config.extensions:
@@ -780,11 +784,14 @@ class AiDirFuzz:
                         
                         if file_result and self._is_interesting_result(file_result):
                             results.append(file_result)
+                            self.results.append(file_result)  # Add to main results for graceful shutdown
+                        
+                        # Update progress for extension test
+                        self._update_progress()
                 
-                self._update_progress()
                 return result
         
-        # Calculate total requests
+        # Calculate total requests properly
         self.total_requests = len(wordlist) * (1 + len(self.config.extensions))
         self.logger.log(f"Starting directory scan: {self.total_requests} total requests")
         self._start_progress()
