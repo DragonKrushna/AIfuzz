@@ -927,7 +927,8 @@ class AiDirFuzz:
                 MofNCompleteColumn(),
                 TaskProgressColumn(),
                 TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                console=console
+                console=console,
+                refresh_per_second=10  # Increase refresh rate
             )
             self.progress.start()
             self.task_id = self.progress.add_task("Scanning...", total=self.total_requests)
@@ -939,13 +940,14 @@ class AiDirFuzz:
     def _update_progress(self):
         """Update progress"""
         self.completed_requests += 1
-        if self.progress and self.task_id:
+        if self.progress and self.task_id is not None:
             self.progress.update(self.task_id, advance=1)
     
     def _stop_progress(self):
         """Stop progress tracking"""
         if self.progress:
             self.progress.stop()
+            self.progress = None
         self.logger.log("Progress tracking stopped")
     
     async def run_scan(self) -> List[ScanResult]:
