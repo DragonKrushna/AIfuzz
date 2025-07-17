@@ -1,0 +1,28 @@
+{
+  "scan_metadata": {
+    "target_url": "https://httpbin.org",
+    "scan_mode": "dir",
+    "scan_date": "2025-07-17T11:28:09.112774",
+    "wordlist_size": "small",
+    "concurrent_requests": 5,
+    "total_requests": 282,
+    "interesting_results": 1,
+    "scan_duration": 17.814515590667725,
+    "ai_analysis_enabled": false,
+    "version": "1.1.0"
+  },
+  "results": [
+    {
+      "url": "https://httpbin.org/cookies",
+      "method": "GET",
+      "status_code": 200,
+      "content_length": 20,
+      "content_type": "application/json",
+      "response_time": 528.8577079772949,
+      "redirect_url": "https://httpbin.org/cookies",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T11:27:58.847451"
+    }
+  ]
+}
