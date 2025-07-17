@@ -1192,11 +1192,14 @@ def main():
         epilog="""
 Examples:
   aifuzz -u https://example.com -m dir -c 100
-  aifuzz -u https://api.example.com -m api -c 50 -o results.json
+  aifuzz -u https://api.example.com -m api -c 50 -o custom_results.json
   aifuzz -u https://example.com -m param -w custom_params.txt
   aifuzz -u https://example.com -m hybrid -c 200 --ai-analysis
   aifuzz -u https://example.com -m dir --wordlist-size small -v
   aifuzz --config  # Update configuration
+
+Results are automatically saved to aifuzz_results/ folder with filename format:
+  domain_mode_timestamp.format (e.g., example.com_dir_20250107_143022.json)
         """
     )
     
