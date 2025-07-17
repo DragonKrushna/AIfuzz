@@ -1028,11 +1028,28 @@ def setup_config_file():
     config_file = config_dir / "config.json"
     
     if not config_file.exists():
-        # First time setup
+        # Check if we're in interactive mode
+        if not sys.stdin.isatty():
+            # Non-interactive mode, create empty config
+            config = {
+                "gemini_api_key": "",
+                "gemini_model": "gemini-2.0-flash"
+            }
+            with open(config_file, 'w') as f:
+                json.dump(config, f, indent=2)
+            console.print(f"[yellow]Created empty config file: {config_file}[/yellow]")
+            console.print("[yellow]Run 'aifuzz --config' to set up your API key for AI features[/yellow]")
+            return config
+        
+        # Interactive mode - First time setup
         console.print("[bold yellow]AiDirFuzz First Time Setup[/bold yellow]")
         console.print("Please enter your Gemini API key for AI-powered analysis:")
+        console.print("(Leave empty to skip AI features)")
         
-        api_key = input("Gemini API Key: ").strip()
+        try:
+            api_key = input("Gemini API Key: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            api_key = ""
         
         config = {
             "gemini_api_key": api_key,
@@ -1053,7 +1070,7 @@ def setup_config_file():
                 return json.load(f)
         except Exception as e:
             console.print(f"[red]Failed to load config: {str(e)}[/red]")
-            return {}
+            return {"gemini_api_key": "", "gemini_model": "gemini-2.0-flash"}
 
 def update_config():
     """Update configuration file"""
