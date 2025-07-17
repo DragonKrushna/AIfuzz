@@ -627,6 +627,13 @@ class AiDirFuzz:
         self.logger.log("Stopping scan... Please wait for cleanup", "warning")
         console.print("\n[red]Stopping scan... Please wait for cleanup[/red]")
         self.keyboard_listener.stop_listening()
+        
+        # Save results if any exist
+        if self.results:
+            console.print("[yellow]Saving results from interrupted scan...[/yellow]")
+            self.save_results(self.results)
+        else:
+            console.print("[yellow]No results to save from interrupted scan[/yellow]")
     
     async def __aenter__(self):
         """Async context manager entry"""
