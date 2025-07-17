@@ -1299,15 +1299,17 @@ Examples:
                 # Display results
                 scanner.display_results(results)
                 
-                # Save results if output file specified
-                if args.output:
-                    scanner.save_results(results)
+                # Always save results to structured folder
+                scanner.save_results(results)
                 
                 # Final summary
                 elapsed_time = time.time() - scanner.start_time if scanner.start_time else 0
                 console.print(f"\n[bold green]Scan completed in {elapsed_time:.2f} seconds[/bold green]")
                 console.print(f"[blue]Total requests: {scanner.completed_requests}[/blue]")
                 console.print(f"[blue]Requests per second: {scanner.completed_requests/elapsed_time:.2f}[/blue]")
+                
+                if results:
+                    console.print(f"[green]Results automatically saved to: aifuzz_results/[/green]")
                 
         except KeyboardInterrupt:
             console.print("\n[red]Scan interrupted by user[/red]")
