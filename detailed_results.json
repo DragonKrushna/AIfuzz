@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://allen.ac.in/js",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 2199.8469829559326,
+    "redirect_url": "https://www.allen.ac.in/js/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:20.267709"
+  },
+  {
+    "url": "https://allen.ac.in/css",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 2221.9083309173584,
+    "redirect_url": "https://www.allen.ac.in/css/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:20.289700"
+  },
+  {
+    "url": "https://allen.ac.in/images",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 2299.8602390289307,
+    "redirect_url": "https://www.allen.ac.in/images/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:20.367502"
+  },
+  {
+    "url": "https://allen.ac.in/assets",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 678.6391735076904,
+    "redirect_url": "https://www.allen.ac.in/assets/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:20.819668"
+  },
+  {
+    "url": "https://allen.ac.in/common",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 1450.7694244384766,
+    "redirect_url": "https://www.allen.ac.in/common/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:24.918477"
+  },
+  {
+    "url": "https://allen.ac.in/about",
+    "method": "GET",
+    "status_code": 403,
+    "content_length": 1233,
+    "content_type": "text/html",
+    "response_time": 1456.6965103149414,
+    "redirect_url": "https://www.allen.ac.in/about/",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:23:29.154612"
+  }
+]
