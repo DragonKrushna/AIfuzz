@@ -470,9 +470,14 @@ class KeyboardListener:
         self.logger = verbose_logger
         self.listening = False
         self.thread = None
+        self.is_interactive = sys.stdin.isatty()
         
     def start_listening(self):
         """Start keyboard listener thread"""
+        if not self.is_interactive:
+            self.logger.log("Non-interactive mode detected, skipping keyboard listener")
+            return
+            
         if not self.listening:
             self.listening = True
             self.thread = threading.Thread(target=self._listen_for_keys, daemon=True)
@@ -487,6 +492,9 @@ class KeyboardListener:
     
     def _listen_for_keys(self):
         """Listen for keyboard input"""
+        if not self.is_interactive:
+            return
+            
         try:
             # Save original terminal settings
             old_settings = termios.tcgetattr(sys.stdin)
