@@ -203,6 +203,9 @@
         - working: true
           agent: "main"
           comment: "Added graceful shutdown handling in signal handler. When scan is interrupted (Ctrl+C), it now saves any results found during the scan. Results are accumulated in main results list during scanning for proper save on termination."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: Graceful shutdown working correctly - when scan is interrupted with Ctrl+C or timeout, it saves any results found during the scan to aifuzz_results/ folder. Verified with multiple test scenarios showing 'Saving results from interrupted scan' and 'Results saved to:' messages."
 
   - task: "Fix emergentintegrations installation issues"
     implemented: true
