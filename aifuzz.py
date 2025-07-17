@@ -1267,6 +1267,48 @@ def update_config():
         json.dump(config, f, indent=2)
     
     console.print(f"[green]Configuration updated successfully![/green]")
+    """Update configuration file"""
+    config_dir = Path.home() / ".aifuzz"
+    config_dir.mkdir(exist_ok=True)
+    config_file = config_dir / "config.json"
+    
+    # Load existing config
+    config = {}
+    if config_file.exists():
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+        except:
+            pass
+    
+    console.print("[bold yellow]Update AiDirFuzz Configuration[/bold yellow]")
+    console.print(f"Current API Key: {config.get('gemini_api_key', 'Not set')[:10]}...")
+    
+    new_api_key = input("New Gemini API Key (press Enter to keep current): ").strip()
+    if new_api_key:
+        config["gemini_api_key"] = new_api_key
+    
+    print("Available Gemini models:")
+    models = [
+        "gemini-2.5-flash-preview-04-17",
+        "gemini-2.5-pro-preview-05-06", 
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
+    ]
+    
+    for i, model in enumerate(models, 1):
+        print(f"{i}. {model}")
+    
+    model_choice = input(f"Select model (1-{len(models)}, press Enter for current): ").strip()
+    if model_choice.isdigit() and 1 <= int(model_choice) <= len(models):
+        config["gemini_model"] = models[int(model_choice) - 1]
+    
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    console.print(f"[green]Configuration updated successfully![/green]")
 
 def main():
     """Main function"""
