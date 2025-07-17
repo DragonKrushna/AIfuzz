@@ -81,6 +81,8 @@ ln -s $(pwd)/aifuzz.py ~/.local/bin/aifuzz
 
 ### First Time Setup
 ```bash
+# Only if the next step doesn't work due to aiohttp related error
+pip3 install --user aiohttp rich
 # First run will prompt for Gemini API key
 aifuzz --config
 ```
