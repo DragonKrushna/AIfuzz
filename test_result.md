@@ -103,10 +103,7 @@
 #====================================================================================================
 
 ## user_problem_statement: |
-  Debug all error causing elements in the codebase, especially Python 3.7 compatibility issues,
-  ModuleNotFoundError: No module named 'aiohttp', AI rate limit issues, progress bar not working,
-  add verbose mode with wordlist size options, and implement automatic results saving with
-  structured folder and filename format for the aifuzz.py tool.
+  understand the codebase , check for any errors , add a wifite like interface when a --wizard tag is added after aifuzz which will cycle through all the tags availble in our project once so that nothing is missed,  the scan progress bar is still not working , when pressing enter for verbose it should only show limited output and  should only show the working scan bar after that , when i adruptly end the scan it should still save the file with whatever result they got (not if no result was found),  there should be a tag present to give a github url of the wordlist repo we want to choose if not for the default ones we have selected
 
 ## backend:
   - task: "Install missing dependencies and ensure backend runs"
@@ -135,7 +132,7 @@
           comment: "Frontend dependencies are up-to-date. React app is running on port 3000 via supervisor."
 
 ## standalone_tool:
-  - task: "Fix aifuzz.py ModuleNotFoundError and ensure tool works"
+  - task: "Fix progress bar not working correctly"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -145,9 +142,9 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Completely rewritten and improved aifuzz.py tool with fixes for: 1) Installation issues with emergentintegrations/Pillow dependencies, 2) Implemented batch AI analysis to avoid rate limits, 3) Fixed progress bar to show real progress with proper percentage calculation, 4) Added verbose mode with keyboard listener for Enter key toggle, 5) Added wordlist size options (small/medium/large) for GitHub wordlists, 6) Improved error handling and non-interactive mode support. Tool now works correctly with all requested features."
+          comment: "Fixed progress bar calculation and display. Now shows real-time progress (e.g., 176/500 35%) by properly updating progress after each individual request. Added refresh rate configuration for better visual feedback."
 
-  - task: "Implement batch-based AI analysis to avoid rate limits"
+  - task: "Add --wizard flag for interactive configuration"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -157,9 +154,9 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Implemented batch AI analysis system that processes results in configurable batches (default 10) with delay between batches (default 2s) to avoid rate limits. Added --ai-batch-size and --ai-batch-delay parameters for customization."
+          comment: "Added comprehensive wizard mode with --wizard flag that cycles through all available options: target URL, scan modes, concurrent requests, timeouts, wordlist settings, custom wordlists, GitHub repos, extensions, output formats, verbose mode, AI analysis, headers, proxy, SSL verification. Includes input validation and configuration summary."
 
-  - task: "Fix progress bar to show real progress"
+  - task: "Add --github-wordlist flag for custom wordlist repos"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -169,9 +166,9 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Fixed progress bar calculation and display. Now shows actual progress with proper percentage, completed/total requests, and uses Rich progress bar with spinner, bar, and percentage. Progress updates correctly as requests are processed."
+          comment: "Added --github-wordlist flag supporting multiple custom GitHub wordlist repository URLs. Tested with SecLists repo - successfully loads custom wordlists and combines them with default wordlists."
 
-  - task: "Add verbose mode with Enter key toggle"
+  - task: "Improve verbose mode with 4-second display then progress bar"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -181,9 +178,9 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Implemented verbose logging system with keyboard listener. Users can press Enter during scan to toggle verbose mode. Verbose mode shows detailed request/response information, wordlist loading progress, and system messages. Added -v/--verbose flag for initial verbose mode."
+          comment: "Enhanced verbose mode to show detailed logs for 4 seconds when Enter is pressed, then automatically switch back to progress bar. Added threading timer for automatic verbose mode disabling. Tested and working correctly."
 
-  - task: "Add automatic results saving with structured folder and naming"
+  - task: "Add graceful shutdown with results saving"
     implemented: true
     working: true
     file: "aifuzz.py"
@@ -193,24 +190,54 @@
     status_history:
         - working: true
           agent: "main"
-          comment: "Implemented automatic results saving to 'aifuzz_results/' folder with filename format 'domain_mode_timestamp.format'. Enhanced JSON format includes comprehensive scan metadata. TXT format includes scan information header. All results are automatically saved even without -o parameter. Supports custom output paths while maintaining folder structure."
+          comment: "Added graceful shutdown handling in signal handler. When scan is interrupted (Ctrl+C), it now saves any results found during the scan. Results are accumulated in main results list during scanning for proper save on termination."
+
+  - task: "Fix emergentintegrations installation issues"
+    implemented: true
+    working: true
+    file: "aifuzz.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Improved AI package installation with --no-cache-dir flag and better error handling. If emergentintegrations fails to install, AI analysis is automatically disabled instead of causing crashes. Installation now works properly without Pillow/dependency conflicts."
+
+  - task: "Implement all original aifuzz.py features"
+    implemented: true
+    working: true
+    file: "aifuzz.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "All original features maintained: batch AI analysis, wordlist size options, automatic results saving, custom wordlists, directory/param/api/hybrid modes, concurrent requests, custom headers, proxy support, SSL verification, multiple output formats (JSON/CSV/TXT), Rich progress bars, verbose logging, and comprehensive error handling."
 
 ## metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "1.1"
+  test_sequence: 2
   run_ui: false
   python_version: "3.11.13"
   environment_status: "fully_functional"
+  new_features_added: true
 
 ## test_plan:
   current_focus:
-    - "All critical issues resolved and enhanced features implemented"
-    - "AiDirFuzz tool fully functional with improved capabilities"
+    - "All requested improvements implemented and working"
+    - "Wizard mode provides comprehensive configuration interface"
+    - "Progress bar shows real-time progress correctly"
+    - "Verbose mode works with 4-second display timer"
+    - "Graceful shutdown saves results on interruption"
+    - "GitHub wordlist support for custom repositories"
+    - "AI integration properly handles installation failures"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 ## agent_communication:
     - agent: "main"
-      message: "Successfully resolved all dependency issues and implemented ALL requested enhancements plus automatic results saving. The aifuzz.py tool now features: 1) Fixed installation issues and dependency conflicts, 2) Batch AI analysis system to prevent rate limits, 3) Working progress bar with real progress tracking, 4) Interactive verbose mode with Enter key toggle, 5) Wordlist size options (small/medium/large), 6) Automatic results saving to 'aifuzz_results/' folder with structured naming (domain_mode_timestamp.format), 7) Enhanced result formats with metadata, 8) Improved error handling and non-interactive mode support. Tool is fully functional and significantly enhanced."
+      message: "Successfully implemented ALL requested improvements: 1) Fixed progress bar to show real-time progress (e.g., 176/500 35%), 2) Added comprehensive --wizard mode that cycles through all available configuration options with input validation, 3) Added --github-wordlist flag supporting multiple custom GitHub wordlist repositories, 4) Enhanced verbose mode to show logs for 4 seconds then return to progress bar, 5) Added graceful shutdown that saves results on interruption, 6) Fixed emergentintegrations installation issues with better error handling, 7) Maintained all original features including AI analysis, wordlist options, concurrent requests, custom headers, proxy support, multiple output formats, and comprehensive error handling. All features tested and working correctly."
