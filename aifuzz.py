@@ -253,6 +253,12 @@ class GitHubWordlistFetcher:
         self.session = None
         self.cache = {}
         self.logger = verbose_logger
+        self.custom_repos = []  # Store custom GitHub repo URLs
+    
+    def add_custom_repo(self, repo_url: str):
+        """Add custom GitHub repository URL"""
+        self.custom_repos.append(repo_url)
+        self.logger.log(f"Added custom wordlist repo: {repo_url}")
     
     async def __aenter__(self):
         connector = aiohttp.TCPConnector(limit=10)
@@ -297,14 +303,55 @@ class GitHubWordlistFetcher:
             self.logger.log(f"Error fetching wordlist from {repo_path}: {str(e)}", "error")
             return []
     
+    async def fetch_custom_wordlist(self, repo_url: str, limit: int = -1) -> List[str]:
+        """Fetch wordlist from custom GitHub repository URL"""
+        try:
+            self.logger.log(f"Fetching custom wordlist from {repo_url}")
+            
+            # Convert GitHub URL to raw content URL
+            if "github.com" in repo_url:
+                raw_url = repo_url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+            else:
+                raw_url = repo_url
+            
+            async with self.session.get(raw_url) as response:
+                if response.status == 200:
+                    content = await response.text()
+                    # Filter out empty lines and comments
+                    wordlist = [
+                        line.strip() for line in content.split('\n') 
+                        if line.strip() and not line.strip().startswith('#')
+                    ]
+                    
+                    # Apply limit if specified
+                    if limit > 0:
+                        wordlist = wordlist[:limit]
+                    
+                    self.logger.log(f"Loaded {len(wordlist)} words from custom repo")
+                    return wordlist
+                else:
+                    self.logger.log(f"Failed to fetch custom wordlist: {response.status}", "error")
+                    return []
+        except Exception as e:
+            self.logger.log(f"Error fetching custom wordlist: {str(e)}", "error")
+            return []
+    
     async def get_combined_wordlist(self, wordlist_type: str, size: str = "medium") -> List[str]:
-        """Get combined wordlist from multiple sources"""
+        """Get combined wordlist from multiple sources including custom repos"""
         all_words = set()
         
+        # Add words from default wordlists
         if size in WORDLIST_CONFIGS and wordlist_type in WORDLIST_CONFIGS[size]:
             self.logger.log(f"Loading {size} {wordlist_type} wordlist")
             for repo_path, limit in WORDLIST_CONFIGS[size][wordlist_type]:
                 words = await self.fetch_wordlist(repo_path, limit)
+                all_words.update(words)
+        
+        # Add words from custom repositories
+        if self.custom_repos:
+            self.logger.log(f"Loading from {len(self.custom_repos)} custom repositories")
+            for repo_url in self.custom_repos:
+                words = await self.fetch_custom_wordlist(repo_url)
                 all_words.update(words)
         
         result = list(all_words)
