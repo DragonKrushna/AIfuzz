@@ -3,7 +3,7 @@
 """
 AiDirFuzz - AI-Powered Directory Busting and Fuzzing Tool
 Created by: AI Development Team
-Version: 1.0.0
+Version: 1.1.0
 
 A comprehensive penetration testing tool that combines traditional directory busting
 with AI-powered analysis for smarter, more efficient security testing.
@@ -29,11 +29,14 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import signal
+import select
+import tty
+import termios
 
 # Rich imports for beautiful CLI
 try:
     from rich.console import Console
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn
     from rich.table import Table
     from rich.panel import Panel
     from rich.text import Text
@@ -41,6 +44,7 @@ try:
     from rich.layout import Layout
     from rich.align import Align
     from rich import print as rprint
+    from rich.status import Status
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -48,7 +52,7 @@ except ImportError:
     os.system("pip install rich")
     try:
         from rich.console import Console
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn
         from rich.table import Table
         from rich.panel import Panel
         from rich.text import Text
@@ -56,6 +60,7 @@ except ImportError:
         from rich.layout import Layout
         from rich.align import Align
         from rich import print as rprint
+        from rich.status import Status
         RICH_AVAILABLE = True
     except ImportError:
         RICH_AVAILABLE = False
@@ -65,26 +70,63 @@ console = Console() if RICH_AVAILABLE else None
 
 # Global variables
 STOP_SCANNING = False
+VERBOSE_MODE = False
 GITHUB_API_BASE = "https://api.github.com"
-COMMON_WORDLISTS = {
-    "directories": [
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/directory-list-2.3-medium.txt",
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt",
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/big.txt"
-    ],
-    "files": [
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/web-extensions.txt",
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/Common-DB-Backups.txt",
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/Common-PHP-Filenames.txt"
-    ],
-    "parameters": [
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/burp-parameter-names.txt",
-        "danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt"
-    ],
-    "api": [
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/api/api-endpoints.txt",
-        "danielmiessler/SecLists/blob/master/Discovery/Web-Content/swagger.txt"
-    ]
+
+# Wordlist configurations with size options
+WORDLIST_CONFIGS = {
+    "small": {
+        "directories": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt", 500)
+        ],
+        "files": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/web-extensions.txt", 100)
+        ],
+        "parameters": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/burp-parameter-names.txt", 200)
+        ],
+        "api": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/api/api-endpoints.txt", 150)
+        ]
+    },
+    "medium": {
+        "directories": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt", 2000),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/directory-list-2.3-medium.txt", 5000)
+        ],
+        "files": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/web-extensions.txt", 300),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/Common-DB-Backups.txt", 200)
+        ],
+        "parameters": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/burp-parameter-names.txt", 1000),
+            ("danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt", 500)
+        ],
+        "api": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/api/api-endpoints.txt", 500),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/swagger.txt", 300)
+        ]
+    },
+    "large": {
+        "directories": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/directory-list-2.3-medium.txt", 20000),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/common.txt", -1),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/big.txt", 10000)
+        ],
+        "files": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/web-extensions.txt", -1),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/Common-DB-Backups.txt", -1),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/Common-PHP-Filenames.txt", -1)
+        ],
+        "parameters": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/burp-parameter-names.txt", -1),
+            ("danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt", -1)
+        ],
+        "api": [
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/api/api-endpoints.txt", -1),
+            ("danielmiessler/SecLists/blob/master/Discovery/Web-Content/swagger.txt", -1)
+        ]
+    }
 }
 
 @dataclass
@@ -113,7 +155,7 @@ class ScanConfig:
     concurrent_requests: int = 50
     timeout: int = 10
     delay: float = 0.0
-    user_agent: str = "AiDirFuzz/1.0"
+    user_agent: str = "AiDirFuzz/1.1"
     custom_headers: Dict[str, str] = None
     cookies: Dict[str, str] = None
     proxy: Optional[str] = None
@@ -130,6 +172,11 @@ class ScanConfig:
     ai_analysis: bool = True
     gemini_api_key: Optional[str] = None
     gemini_model: str = "gemini-2.0-flash"
+    wordlist_size: str = "medium"
+    verbose: bool = False
+    batch_ai_analysis: bool = True
+    ai_batch_size: int = 10
+    ai_batch_delay: float = 2.0
     
     def __post_init__(self):
         if self.custom_headers is None:
@@ -141,12 +188,50 @@ class ScanConfig:
         if self.status_codes is None:
             self.status_codes = [200, 201, 204, 301, 302, 307, 308, 403, 405, 500]
 
+class VerboseLogger:
+    """Handles verbose logging and interactive mode"""
+    
+    def __init__(self, console):
+        self.console = console
+        self.verbose = False
+        self.log_messages = []
+        self.max_log_size = 1000
+        
+    def log(self, message: str, level: str = "info"):
+        """Log a message with timestamp"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] [{level.upper()}] {message}"
+        self.log_messages.append(log_entry)
+        
+        # Keep only recent messages
+        if len(self.log_messages) > self.max_log_size:
+            self.log_messages = self.log_messages[-self.max_log_size:]
+        
+        if self.verbose:
+            color = "green" if level == "info" else "yellow" if level == "warning" else "red"
+            self.console.print(f"[{color}]{log_entry}[/{color}]")
+    
+    def toggle_verbose(self):
+        """Toggle verbose mode"""
+        self.verbose = not self.verbose
+        status = "enabled" if self.verbose else "disabled"
+        self.log(f"Verbose mode {status}", "info")
+        
+    def show_recent_logs(self, count: int = 20):
+        """Show recent log messages"""
+        recent_logs = self.log_messages[-count:]
+        self.console.print("\n[bold yellow]Recent Activity:[/bold yellow]")
+        for log in recent_logs:
+            self.console.print(f"[dim]{log}[/dim]")
+        self.console.print("")
+
 class GitHubWordlistFetcher:
     """Fetches wordlists from GitHub repositories without downloading"""
     
-    def __init__(self):
+    def __init__(self, verbose_logger: VerboseLogger):
         self.session = None
         self.cache = {}
+        self.logger = verbose_logger
     
     async def __aenter__(self):
         connector = aiohttp.TCPConnector(limit=10)
@@ -157,12 +242,14 @@ class GitHubWordlistFetcher:
         if self.session:
             await self.session.close()
     
-    async def fetch_wordlist(self, repo_path: str) -> List[str]:
-        """Fetch wordlist from GitHub repository"""
-        if repo_path in self.cache:
-            return self.cache[repo_path]
+    async def fetch_wordlist(self, repo_path: str, limit: int = -1) -> List[str]:
+        """Fetch wordlist from GitHub repository with optional limit"""
+        cache_key = f"{repo_path}_{limit}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]
         
         try:
+            self.logger.log(f"Fetching wordlist from {repo_path}")
             # Convert GitHub blob URL to raw content URL
             raw_url = f"https://raw.githubusercontent.com/{repo_path.replace('/blob/', '/')}"
             
@@ -174,39 +261,50 @@ class GitHubWordlistFetcher:
                         line.strip() for line in content.split('\n') 
                         if line.strip() and not line.strip().startswith('#')
                     ]
-                    self.cache[repo_path] = wordlist
+                    
+                    # Apply limit if specified
+                    if limit > 0:
+                        wordlist = wordlist[:limit]
+                    
+                    self.cache[cache_key] = wordlist
+                    self.logger.log(f"Loaded {len(wordlist)} words from {repo_path}")
                     return wordlist
                 else:
-                    console.print(f"[red]Failed to fetch wordlist from {repo_path}: {response.status}[/red]")
+                    self.logger.log(f"Failed to fetch wordlist from {repo_path}: {response.status}", "error")
                     return []
         except Exception as e:
-            console.print(f"[red]Error fetching wordlist from {repo_path}: {str(e)}[/red]")
+            self.logger.log(f"Error fetching wordlist from {repo_path}: {str(e)}", "error")
             return []
     
-    async def get_combined_wordlist(self, wordlist_type: str) -> List[str]:
+    async def get_combined_wordlist(self, wordlist_type: str, size: str = "medium") -> List[str]:
         """Get combined wordlist from multiple sources"""
         all_words = set()
         
-        if wordlist_type in COMMON_WORDLISTS:
-            for repo_path in COMMON_WORDLISTS[wordlist_type]:
-                words = await self.fetch_wordlist(repo_path)
+        if size in WORDLIST_CONFIGS and wordlist_type in WORDLIST_CONFIGS[size]:
+            self.logger.log(f"Loading {size} {wordlist_type} wordlist")
+            for repo_path, limit in WORDLIST_CONFIGS[size][wordlist_type]:
+                words = await self.fetch_wordlist(repo_path, limit)
                 all_words.update(words)
         
-        return list(all_words)
+        result = list(all_words)
+        self.logger.log(f"Combined {wordlist_type} wordlist: {len(result)} words")
+        return result
 
 class AIAnalyzer:
-    """AI-powered analysis using Gemini API"""
+    """AI-powered analysis using Gemini API with batch processing"""
     
-    def __init__(self, api_key: str, model: str = "gemini-2.0-flash"):
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash", verbose_logger: VerboseLogger = None):
         self.api_key = api_key
         self.model = model
         self.session_id = str(uuid.uuid4())
         self.chat = None
+        self.logger = verbose_logger or VerboseLogger(console)
         self._setup_chat()
     
     def _setup_chat(self):
         """Setup the AI chat instance"""
         try:
+            self.logger.log("Initializing AI chat system")
             from emergentintegrations.llm.chat import LlmChat, UserMessage
             self.chat = LlmChat(
                 api_key=self.api_key,
@@ -223,9 +321,10 @@ Always provide concise, actionable insights focused on security implications."""
             ).with_model("gemini", self.model)
             
             self.UserMessage = UserMessage
+            self.logger.log("AI chat system initialized successfully")
             
         except Exception as e:
-            console.print(f"[red]Failed to initialize AI chat: {str(e)}[/red]")
+            self.logger.log(f"Failed to initialize AI chat: {str(e)}", "error")
             self.chat = None
     
     async def analyze_target(self, target_url: str) -> Dict[str, Any]:
@@ -234,6 +333,7 @@ Always provide concise, actionable insights focused on security implications."""
             return {"error": "AI chat not initialized"}
         
         try:
+            self.logger.log(f"Running AI target analysis for {target_url}")
             message = self.UserMessage(
                 text=f"""Analyze this target URL for penetration testing: {target_url}
 
@@ -248,54 +348,87 @@ Return response in JSON format."""
             )
             
             response = await self.chat.send_message(message)
+            self.logger.log("AI target analysis completed")
             return {"analysis": response, "error": None}
             
         except Exception as e:
+            self.logger.log(f"AI analysis failed: {str(e)}", "error")
             return {"error": f"AI analysis failed: {str(e)}"}
     
-    async def analyze_response(self, result: ScanResult) -> Dict[str, Any]:
-        """Analyze HTTP response for security implications"""
+    async def analyze_results_batch(self, results: List[ScanResult], batch_size: int = 10, delay: float = 2.0) -> List[ScanResult]:
+        """Analyze multiple results in batches to avoid rate limits"""
         if not self.chat:
-            return {"score": 0.0, "analysis": "AI not available"}
+            self.logger.log("AI chat not available, skipping batch analysis", "warning")
+            return results
         
-        try:
-            message = self.UserMessage(
-                text=f"""Analyze this HTTP response for security implications:
-
-URL: {result.url}
-Method: {result.method}
-Status Code: {result.status_code}
-Content Length: {result.content_length}
-Content Type: {result.content_type}
-Response Time: {result.response_time}ms
-Redirect URL: {result.redirect_url}
-
-Provide:
+        analyzed_results = []
+        total_batches = (len(results) + batch_size - 1) // batch_size
+        
+        self.logger.log(f"Starting batch AI analysis: {len(results)} results in {total_batches} batches")
+        
+        for i in range(0, len(results), batch_size):
+            batch = results[i:i + batch_size]
+            batch_num = (i // batch_size) + 1
+            
+            try:
+                self.logger.log(f"Processing batch {batch_num}/{total_batches} ({len(batch)} results)")
+                
+                # Prepare batch analysis message
+                batch_text = f"Analyze these {len(batch)} HTTP responses for security implications:\n\n"
+                for idx, result in enumerate(batch, 1):
+                    batch_text += f"Response {idx}:\n"
+                    batch_text += f"URL: {result.url}\n"
+                    batch_text += f"Method: {result.method}\n"
+                    batch_text += f"Status Code: {result.status_code}\n"
+                    batch_text += f"Content Length: {result.content_length}\n"
+                    batch_text += f"Content Type: {result.content_type}\n"
+                    batch_text += f"Response Time: {result.response_time}ms\n"
+                    batch_text += f"Redirect URL: {result.redirect_url}\n\n"
+                
+                batch_text += """For each response, provide:
 1. Vulnerability score (0-10)
 2. Security analysis
-3. Recommendations
-4. Interesting findings
+3. Interesting findings
 
-Keep response concise and focused on security implications."""
-            )
-            
-            response = await self.chat.send_message(message)
-            
-            # Extract vulnerability score (simple heuristic)
-            score = 0.0
-            if result.status_code in [200, 201, 204]:
-                score += 2.0
-            if result.status_code in [403, 405]:
-                score += 1.0
-            if result.status_code == 500:
-                score += 3.0
-            if result.content_length > 10000:
-                score += 1.0
-            
-            return {"score": score, "analysis": response}
-            
-        except Exception as e:
-            return {"score": 0.0, "analysis": f"AI analysis failed: {str(e)}"}
+Format as JSON array with same order as input."""
+                
+                message = self.UserMessage(text=batch_text)
+                response = await self.chat.send_message(message)
+                
+                # Process batch response
+                for j, result in enumerate(batch):
+                    # Simple heuristic scoring as fallback
+                    score = 0.0
+                    if result.status_code in [200, 201, 204]:
+                        score += 2.0
+                    if result.status_code in [403, 405]:
+                        score += 1.0
+                    if result.status_code == 500:
+                        score += 3.0
+                    if result.content_length > 10000:
+                        score += 1.0
+                    
+                    result.ai_analysis = f"Batch {batch_num} Analysis: {response}"
+                    result.vulnerability_score = score
+                    analyzed_results.append(result)
+                
+                self.logger.log(f"Batch {batch_num} analyzed successfully")
+                
+                # Rate limiting delay
+                if i + batch_size < len(results):
+                    self.logger.log(f"Rate limiting delay: {delay}s")
+                    await asyncio.sleep(delay)
+                    
+            except Exception as e:
+                self.logger.log(f"Batch {batch_num} analysis failed: {str(e)}", "error")
+                # Add results without AI analysis
+                for result in batch:
+                    result.ai_analysis = f"Analysis failed: {str(e)}"
+                    result.vulnerability_score = 0.0
+                    analyzed_results.append(result)
+        
+        self.logger.log(f"Batch AI analysis completed: {len(analyzed_results)} results processed")
+        return analyzed_results
     
     async def generate_wordlist(self, target_url: str, context: str) -> List[str]:
         """Generate custom wordlist based on target analysis"""
@@ -303,6 +436,7 @@ Keep response concise and focused on security implications."""
             return []
         
         try:
+            self.logger.log(f"Generating AI wordlist for {target_url}")
             message = self.UserMessage(
                 text=f"""Generate a custom wordlist for directory busting based on:
 
@@ -322,11 +456,61 @@ Return only the wordlist, one item per line."""
                 if line.strip() and not line.strip().startswith('#')
             ]
             
+            self.logger.log(f"Generated {len(wordlist)} AI words")
             return wordlist[:50]  # Limit to 50 items
             
         except Exception as e:
-            console.print(f"[red]Failed to generate AI wordlist: {str(e)}[/red]")
+            self.logger.log(f"Failed to generate AI wordlist: {str(e)}", "error")
             return []
+
+class KeyboardListener:
+    """Handles keyboard input for interactive features"""
+    
+    def __init__(self, verbose_logger: VerboseLogger):
+        self.logger = verbose_logger
+        self.listening = False
+        self.thread = None
+        
+    def start_listening(self):
+        """Start keyboard listener thread"""
+        if not self.listening:
+            self.listening = True
+            self.thread = threading.Thread(target=self._listen_for_keys, daemon=True)
+            self.thread.start()
+            self.logger.log("Keyboard listener started (Press Enter for verbose mode)")
+    
+    def stop_listening(self):
+        """Stop keyboard listener"""
+        self.listening = False
+        if self.thread:
+            self.thread.join(timeout=1.0)
+    
+    def _listen_for_keys(self):
+        """Listen for keyboard input"""
+        try:
+            # Save original terminal settings
+            old_settings = termios.tcgetattr(sys.stdin)
+            
+            try:
+                # Set terminal to raw mode
+                tty.setraw(sys.stdin.fileno())
+                
+                while self.listening:
+                    if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
+                        char = sys.stdin.read(1)
+                        if char == '\r' or char == '\n':  # Enter key
+                            self.logger.toggle_verbose()
+                            if self.logger.verbose:
+                                self.logger.show_recent_logs()
+                        elif char == '\x03':  # Ctrl+C
+                            break
+                            
+            finally:
+                # Restore original terminal settings
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                
+        except Exception as e:
+            self.logger.log(f"Keyboard listener error: {str(e)}", "error")
 
 class AiDirFuzz:
     """Main directory busting and fuzzing tool"""
@@ -342,10 +526,15 @@ class AiDirFuzz:
         self.total_requests = 0
         self.completed_requests = 0
         self.start_time = None
+        self.logger = VerboseLogger(console)
+        self.keyboard_listener = KeyboardListener(self.logger)
+        
+        # Set verbose mode from config
+        self.logger.verbose = config.verbose
         
         # Initialize AI analyzer if API key is provided
         if config.gemini_api_key and config.ai_analysis:
-            self.ai_analyzer = AIAnalyzer(config.gemini_api_key, config.gemini_model)
+            self.ai_analyzer = AIAnalyzer(config.gemini_api_key, config.gemini_model, self.logger)
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -355,10 +544,14 @@ class AiDirFuzz:
         """Handle termination signals"""
         global STOP_SCANNING
         STOP_SCANNING = True
+        self.logger.log("Stopping scan... Please wait for cleanup", "warning")
         console.print("\n[red]Stopping scan... Please wait for cleanup[/red]")
+        self.keyboard_listener.stop_listening()
     
     async def __aenter__(self):
         """Async context manager entry"""
+        self.logger.log("Initializing scanner")
+        
         connector = aiohttp.TCPConnector(
             limit=self.config.concurrent_requests,
             limit_per_host=self.config.concurrent_requests,
@@ -373,13 +566,20 @@ class AiDirFuzz:
             headers={"User-Agent": self.config.user_agent}
         )
         
-        self.wordlist_fetcher = GitHubWordlistFetcher()
+        self.wordlist_fetcher = GitHubWordlistFetcher(self.logger)
         await self.wordlist_fetcher.__aenter__()
+        
+        # Start keyboard listener
+        self.keyboard_listener.start_listening()
         
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
+        self.logger.log("Cleaning up scanner")
+        
+        self.keyboard_listener.stop_listening()
+        
         if self.session:
             await self.session.close()
         
@@ -433,15 +633,11 @@ class AiDirFuzz:
                     redirect_url=redirect_url
                 )
                 
-                # AI analysis if enabled
-                if self.ai_analyzer:
-                    ai_result = await self.ai_analyzer.analyze_response(result)
-                    result.ai_analysis = ai_result.get("analysis", "")
-                    result.vulnerability_score = ai_result.get("score", 0.0)
-                
+                self.logger.log(f"Request: {method} {url} -> {response.status} ({response_time:.0f}ms)")
                 return result
                 
         except asyncio.TimeoutError:
+            self.logger.log(f"Timeout: {method} {url}", "warning")
             return ScanResult(
                 url=url,
                 method=method,
@@ -451,6 +647,7 @@ class AiDirFuzz:
                 response_time=(time.time() - start_time) * 1000
             )
         except Exception as e:
+            self.logger.log(f"Error: {method} {url} - {str(e)}", "error")
             return ScanResult(
                 url=url,
                 method=method,
@@ -484,7 +681,6 @@ class AiDirFuzz:
                 
                 if result and self._is_interesting_result(result):
                     results.append(result)
-                    self._update_progress()
                 
                 # Test with extensions if provided
                 if self.config.extensions:
@@ -497,13 +693,13 @@ class AiDirFuzz:
                         
                         if file_result and self._is_interesting_result(file_result):
                             results.append(file_result)
-                            self._update_progress()
                 
                 self._update_progress()
                 return result
         
-        # Start progress tracking
+        # Calculate total requests
         self.total_requests = len(wordlist) * (1 + len(self.config.extensions))
+        self.logger.log(f"Starting directory scan: {self.total_requests} total requests")
         self._start_progress()
         
         # Execute concurrent requests
@@ -547,8 +743,9 @@ class AiDirFuzz:
                 self._update_progress()
                 return result
         
-        # Start progress tracking
+        # Calculate total requests
         self.total_requests = len(wordlist) * len(methods)
+        self.logger.log(f"Starting parameter fuzzing: {self.total_requests} total requests")
         self._start_progress()
         
         # Execute concurrent requests
@@ -588,8 +785,9 @@ class AiDirFuzz:
                 self._update_progress()
                 return result
         
-        # Start progress tracking
+        # Calculate total requests
         self.total_requests = len(api_prefixes) * len(wordlist) * len(methods)
+        self.logger.log(f"Starting API discovery: {self.total_requests} total requests")
         self._start_progress()
         
         # Execute concurrent requests
@@ -630,6 +828,7 @@ class AiDirFuzz:
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(),
+                MofNCompleteColumn(),
                 TaskProgressColumn(),
                 TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                 console=console
@@ -639,6 +838,7 @@ class AiDirFuzz:
         
         self.start_time = time.time()
         self.completed_requests = 0
+        self.logger.log("Progress tracking started")
     
     def _update_progress(self):
         """Update progress"""
@@ -650,11 +850,15 @@ class AiDirFuzz:
         """Stop progress tracking"""
         if self.progress:
             self.progress.stop()
+        self.logger.log("Progress tracking stopped")
     
     async def run_scan(self) -> List[ScanResult]:
         """Run the main scanning process"""
         console.print(f"[bold green]Starting AiDirFuzz scan against: {self.config.target_url}[/bold green]")
-        console.print(f"[blue]Mode: {self.config.mode} | Concurrent: {self.config.concurrent_requests}[/blue]")
+        console.print(f"[blue]Mode: {self.config.mode} | Concurrent: {self.config.concurrent_requests} | Wordlist: {self.config.wordlist_size}[/blue]")
+        
+        if not self.config.verbose:
+            console.print(f"[yellow]Press Enter during scan to enable verbose mode[/yellow]")
         
         # AI target analysis
         if self.ai_analyzer:
@@ -672,6 +876,7 @@ class AiDirFuzz:
             try:
                 with open(self.config.custom_wordlist, 'r') as f:
                     wordlist = [line.strip() for line in f if line.strip()]
+                self.logger.log(f"Loaded custom wordlist: {len(wordlist)} words")
             except FileNotFoundError:
                 console.print(f"[red]Custom wordlist file not found: {self.config.custom_wordlist}[/red]")
                 return []
@@ -679,16 +884,16 @@ class AiDirFuzz:
             # Use GitHub wordlists
             console.print("[yellow]Fetching wordlists from GitHub...[/yellow]")
             if self.config.mode == "dir":
-                wordlist = await self.wordlist_fetcher.get_combined_wordlist("directories")
+                wordlist = await self.wordlist_fetcher.get_combined_wordlist("directories", self.config.wordlist_size)
             elif self.config.mode == "param":
-                wordlist = await self.wordlist_fetcher.get_combined_wordlist("parameters")
+                wordlist = await self.wordlist_fetcher.get_combined_wordlist("parameters", self.config.wordlist_size)
             elif self.config.mode == "api":
-                wordlist = await self.wordlist_fetcher.get_combined_wordlist("api")
+                wordlist = await self.wordlist_fetcher.get_combined_wordlist("api", self.config.wordlist_size)
             elif self.config.mode == "hybrid":
                 # Combine all wordlists
-                dir_words = await self.wordlist_fetcher.get_combined_wordlist("directories")
-                param_words = await self.wordlist_fetcher.get_combined_wordlist("parameters")
-                api_words = await self.wordlist_fetcher.get_combined_wordlist("api")
+                dir_words = await self.wordlist_fetcher.get_combined_wordlist("directories", self.config.wordlist_size)
+                param_words = await self.wordlist_fetcher.get_combined_wordlist("parameters", self.config.wordlist_size)
+                api_words = await self.wordlist_fetcher.get_combined_wordlist("api", self.config.wordlist_size)
                 wordlist = list(set(dir_words + param_words + api_words))
         
         # Generate AI wordlist if enabled
@@ -721,6 +926,15 @@ class AiDirFuzz:
             console.print(f"[red]Unknown scan mode: {self.config.mode}[/red]")
             return []
         
+        # Batch AI analysis if enabled
+        if self.ai_analyzer and self.config.batch_ai_analysis and results:
+            console.print("[yellow]Running batch AI analysis...[/yellow]")
+            results = await self.ai_analyzer.analyze_results_batch(
+                results, 
+                self.config.ai_batch_size, 
+                self.config.ai_batch_delay
+            )
+        
         # Sort results by vulnerability score
         results.sort(key=lambda x: x.vulnerability_score, reverse=True)
         
@@ -733,6 +947,7 @@ class AiDirFuzz:
             return
         
         try:
+            self.logger.log(f"Saving results to {self.config.output_file}")
             if self.config.output_format == "json":
                 with open(self.config.output_file, 'w') as f:
                     json.dump([asdict(result) for result in results], f, indent=2)
@@ -887,6 +1102,7 @@ Examples:
   aifuzz -u https://api.example.com -m api -c 50 -o results.json
   aifuzz -u https://example.com -m param -w custom_params.txt
   aifuzz -u https://example.com -m hybrid -c 200 --ai-analysis
+  aifuzz -u https://example.com -m dir --wordlist-size small -v
   aifuzz --config  # Update configuration
         """
     )
@@ -914,9 +1130,14 @@ Examples:
     parser.add_argument("--proxy", help="Proxy URL (http://proxy:port)")
     parser.add_argument("--no-ssl-verify", action="store_true", help="Disable SSL verification")
     parser.add_argument("--no-ai", action="store_true", help="Disable AI analysis")
+    parser.add_argument("--wordlist-size", choices=["small", "medium", "large"], 
+                       default="medium", help="Wordlist size from GitHub (default: medium)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose mode")
     parser.add_argument("--config", action="store_true", help="Update configuration")
-    parser.add_argument("--user-agent", default="AiDirFuzz/1.0", help="Custom User-Agent")
-    parser.add_argument("--version", action="version", version="AiDirFuzz 1.0.0")
+    parser.add_argument("--user-agent", default="AiDirFuzz/1.1", help="Custom User-Agent")
+    parser.add_argument("--ai-batch-size", type=int, default=10, help="AI analysis batch size (default: 10)")
+    parser.add_argument("--ai-batch-delay", type=float, default=2.0, help="AI analysis batch delay (default: 2.0)")
+    parser.add_argument("--version", action="version", version="AiDirFuzz 1.1.0")
     
     args = parser.parse_args()
     
@@ -969,7 +1190,11 @@ Examples:
         output_file=args.output,
         ai_analysis=not args.no_ai,
         gemini_api_key=config_data.get("gemini_api_key"),
-        gemini_model=config_data.get("gemini_model", "gemini-2.0-flash")
+        gemini_model=config_data.get("gemini_model", "gemini-2.0-flash"),
+        wordlist_size=args.wordlist_size,
+        verbose=args.verbose,
+        ai_batch_size=args.ai_batch_size,
+        ai_batch_delay=args.ai_batch_delay
     )
     
     # Run the scan
@@ -1007,7 +1232,9 @@ Examples:
         from emergentintegrations.llm.chat import LlmChat
     except ImportError:
         console.print("[yellow]Installing AI integration package...[/yellow]")
-        os.system("pip install emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/")
+        result = os.system("pip install emergentintegrations --extra-index-url https://d33sy5i8bnduwe.cloudfront.net/simple/ --upgrade")
+        if result != 0:
+            console.print("[red]Failed to install emergentintegrations. Continuing without AI features.[/red]")
     
     # Run the scanner
     if sys.platform == "win32":
