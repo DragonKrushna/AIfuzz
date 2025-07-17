@@ -362,8 +362,7 @@ class AiDirFuzz:
         connector = aiohttp.TCPConnector(
             limit=self.config.concurrent_requests,
             limit_per_host=self.config.concurrent_requests,
-            ttl_dns_cache=300,
-            ttl_dns_cache_refresh=60
+            ttl_dns_cache=300
         )
         
         timeout = aiohttp.ClientTimeout(total=self.config.timeout)
