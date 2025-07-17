@@ -15,16 +15,20 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 # Check if Python 3.7+ is installed
-python_version=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
-required_version="3.7"
-
 if ! command -v python3 &> /dev/null; then
     echo "Error: Python 3 is not installed. Please install Python 3.7 or higher."
     exit 1
 fi
 
-if (( $(echo "$python_version < $required_version" | bc -l) )); then
-    echo "Error: Python $python_version is installed, but Python $required_version or higher is required."
+python_version=$(python3 --version 2>&1 | cut -d' ' -f2)
+python_major=$(echo "$python_version" | cut -d'.' -f1)
+python_minor=$(echo "$python_version" | cut -d'.' -f2)
+
+# Check if Python version is 3.7 or higher
+if [[ $python_major -eq 3 && $python_minor -ge 7 ]] || [[ $python_major -gt 3 ]]; then
+    echo "✓ Python $python_version detected (compatible)"
+else
+    echo "Error: Python $python_version is installed, but Python 3.7 or higher is required."
     exit 1
 fi
 
