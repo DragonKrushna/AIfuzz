@@ -1215,7 +1215,7 @@ Examples:
     parser.add_argument("-s", "--status-codes", nargs="+", type=int, 
                        default=[200, 201, 204, 301, 302, 307, 308, 403, 405, 500],
                        help="Status codes to show (default: 200 201 204 301 302 307 308 403 405 500)")
-    parser.add_argument("-o", "--output", help="Output file path")
+    parser.add_argument("-o", "--output", help="Output file path (default: auto-generated in aifuzz_results/)")
     parser.add_argument("-f", "--format", choices=["json", "csv", "txt"], 
                        default="json", help="Output format (default: json)")
     parser.add_argument("--headers", nargs="+", help="Custom headers (format: 'Header:Value')")
