@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://allen.ac.in/register",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 38261,
+    "content_type": "text/html; charset=utf-8",
+    "response_time": 1841.5145874023438,
+    "redirect_url": "https://www.allen.ac.in/apps2526/ccp/register",
+    "ai_analysis": null,
+    "vulnerability_score": 0.0,
+    "timestamp": "2025-07-17T07:22:11.016739"
+  }
+]
