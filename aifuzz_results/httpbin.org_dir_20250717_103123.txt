@@ -1,0 +1,11 @@
+AiDirFuzz Scan Results
+Target: https://httpbin.org
+Mode: dir
+Date: 2025-07-17 10:31:23
+Total Results: 2
+--------------------------------------------------------------------------------
+
+200 GET https://httpbin.org/get
+
+200 GET https://httpbin.org/json
+
