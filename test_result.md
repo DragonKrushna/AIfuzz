@@ -103,8 +103,9 @@
 #====================================================================================================
 
 ## user_problem_statement: |
-  Debug all error causing elements in the codebase, especially Python 3.7 compatibility issues
-  and ModuleNotFoundError: No module named 'aiohttp'
+  Debug all error causing elements in the codebase, especially Python 3.7 compatibility issues,
+  ModuleNotFoundError: No module named 'aiohttp', AI rate limit issues, progress bar not working,
+  and add verbose mode with wordlist size options for the aifuzz.py tool.
 
 ## backend:
   - task: "Install missing dependencies and ensure backend runs"
