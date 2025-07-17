@@ -1,74 +1,97 @@
 #!/bin/bash
 
-echo "=== AiDirFuzz v1.1.0 - Improvements Demo ==="
+echo "=== AiDirFuzz v1.1.0 - Enhanced with Auto-Save Results ==="
 echo ""
 
-echo "1. Show tool version and help (with new features):"
+echo "1. Show tool version and help (with new auto-save feature):"
 echo "   python aifuzz.py --version"
 python aifuzz.py --version
 echo ""
 
-echo "2. Show help with new options:"
-echo "   python aifuzz.py --help | grep -A5 -B5 'wordlist-size\|verbose\|ai-batch'"
-python aifuzz.py --help | grep -A5 -B5 'wordlist-size\|verbose\|ai-batch'
+echo "2. Show help with auto-save information:"
+echo "   python aifuzz.py --help | grep -A15 'Results are automatically'"
+python aifuzz.py --help | grep -A15 'Results are automatically'
 echo ""
 
-echo "3. Test small wordlist (quick scan):"
-echo "   timeout 15 python aifuzz.py -u https://httpbin.org -m dir -c 5 --wordlist-size small --no-ai -v"
-timeout 15 python aifuzz.py -u https://httpbin.org -m dir -c 5 --wordlist-size small --no-ai -v
+echo "3. Test with actual results generation and auto-save:"
+echo "   Create test wordlist with httpbin.org endpoints..."
+echo "status" > /tmp/test_wordlist.txt
+echo "json" >> /tmp/test_wordlist.txt
+echo "get" >> /tmp/test_wordlist.txt
+echo "post" >> /tmp/test_wordlist.txt
+echo "put" >> /tmp/test_wordlist.txt
+
+echo "   Running: python aifuzz.py -u https://httpbin.org -m dir -c 2 -w /tmp/test_wordlist.txt --no-ai -s 200 404 -f json"
+python aifuzz.py -u https://httpbin.org -m dir -c 2 -w /tmp/test_wordlist.txt --no-ai -s 200 404 -f json
 echo ""
 
-echo "=== KEY IMPROVEMENTS IMPLEMENTED ==="
+echo "4. Check saved results:"
+echo "   ls -la aifuzz_results/"
+ls -la aifuzz_results/
 echo ""
-echo "✅ Fixed Installation Issues:"
-echo "   - Resolved emergentintegrations/Pillow dependency conflicts"
-echo "   - Clean requirements.txt with only necessary dependencies"
-echo "   - Better error handling for non-interactive environments"
+
+echo "5. Show JSON result format:"
+echo "   Latest JSON file content:"
+latest_json=$(ls -t aifuzz_results/*.json | head -1)
+if [[ -f "$latest_json" ]]; then
+    echo "   File: $latest_json"
+    cat "$latest_json" | head -20
+    echo "   ... (truncated)"
+fi
 echo ""
-echo "✅ Implemented Batch AI Analysis:"
-echo "   - Processes results in configurable batches (default: 10)"
-echo "   - Configurable delay between batches (default: 2s)"
-echo "   - Added --ai-batch-size and --ai-batch-delay parameters"
-echo "   - Prevents rate limiting issues with AI providers"
+
+echo "6. Test TXT format:"
+echo "   Running: python aifuzz.py -u https://httpbin.org -m dir -c 2 -w /tmp/test_wordlist.txt --no-ai -s 200 404 -f txt"
+python aifuzz.py -u https://httpbin.org -m dir -c 2 -w /tmp/test_wordlist.txt --no-ai -s 200 404 -f txt
 echo ""
-echo "✅ Fixed Progress Bar:"
-echo "   - Shows real progress with proper percentage calculation"
-echo "   - Displays completed/total requests (e.g., 269/500)"
-echo "   - Uses Rich progress bar with spinner, bar, and percentage"
-echo "   - Progress updates correctly as requests are processed"
+
+echo "7. Show TXT result format:"
+echo "   Latest TXT file content:"
+latest_txt=$(ls -t aifuzz_results/*.txt | head -1)
+if [[ -f "$latest_txt" ]]; then
+    echo "   File: $latest_txt"
+    cat "$latest_txt"
+fi
 echo ""
-echo "✅ Added Verbose Mode:"
-echo "   - Interactive verbose mode with Enter key toggle during scan"
-echo "   - Added -v/--verbose flag for initial verbose mode"
-echo "   - Shows detailed request/response information"
-echo "   - Displays wordlist loading progress and system messages"
-echo "   - Non-interactive mode detection for automated environments"
+
+echo "=== NEW AUTO-SAVE FUNCTIONALITY ==="
 echo ""
-echo "✅ Added Wordlist Size Options:"
-echo "   - --wordlist-size small/medium/large option"
-echo "   - Small: ~500 words (fast scanning)"
-echo "   - Medium: ~5000 words (balanced)"
-echo "   - Large: ~20000+ words (comprehensive)"
-echo "   - Each size uses different GitHub wordlist sources"
+echo "✅ Automatic Results Saving:"
+echo "   - Results are automatically saved to 'aifuzz_results/' folder"
+echo "   - No need to specify -o parameter (but still supported)"
+echo "   - Automatic filename generation with format: domain_mode_timestamp.format"
+echo "   - Examples: httpbin.org_dir_20250717_103025.json"
 echo ""
-echo "✅ General Improvements:"
-echo "   - Better error handling and timeout management"
-echo "   - Improved keyboard listener for interactive features"
-echo "   - Enhanced configuration management"
-echo "   - Better logging and debugging capabilities"
+echo "✅ Enhanced Result Files:"
+echo "   - JSON format includes comprehensive scan metadata"
+echo "   - TXT format includes scan information header"
+echo "   - CSV format maintains compatibility with existing tools"
+echo ""
+echo "✅ Folder Structure:"
+echo "   - All results organized in aifuzz_results/ directory"
+echo "   - Automatic directory creation if it doesn't exist"
+echo "   - Timestamped filenames prevent overwrites"
+echo ""
+echo "✅ Result Metadata (JSON format):"
+echo "   - Target URL and scan mode"
+echo "   - Scan date and duration"
+echo "   - Wordlist size and configuration"
+echo "   - Total requests and interesting results count"
+echo "   - AI analysis status and tool version"
 echo ""
 echo "=== USAGE EXAMPLES ==="
 echo ""
-echo "# Quick scan with small wordlist:"
+echo "# Basic scan with auto-save:"
 echo "aifuzz -u https://example.com -m dir --wordlist-size small"
 echo ""
-echo "# Verbose mode with medium wordlist:"
-echo "aifuzz -u https://example.com -m dir --wordlist-size medium -v"
+echo "# Scan with custom output file (still uses aifuzz_results/ folder):"
+echo "aifuzz -u https://example.com -m dir -o custom_scan.json"
 echo ""
-echo "# Large scan with custom AI batch settings:"
-echo "aifuzz -u https://example.com -m dir --wordlist-size large --ai-batch-size 5 --ai-batch-delay 3.0"
+echo "# Different formats:"
+echo "aifuzz -u https://example.com -m api -f csv"
+echo "aifuzz -u https://example.com -m hybrid -f txt"
 echo ""
-echo "# API scanning with verbose mode:"
-echo "aifuzz -u https://api.example.com -m api --wordlist-size medium -v"
+echo "# Results are automatically saved to:"
+echo "# ./aifuzz_results/domain_mode_timestamp.format"
 echo ""
-echo "All requested issues have been resolved and enhancements implemented!"
+echo "All previous improvements PLUS automatic structured result saving!"
