@@ -173,6 +173,9 @@
         - working: true
           agent: "main"
           comment: "Added --github-wordlist flag supporting multiple custom GitHub wordlist repository URLs. Tested with SecLists repo - successfully loads custom wordlists and combines them with default wordlists."
+        - working: true
+          agent: "testing"
+          comment: "TESTED: GitHub wordlist feature working correctly - successfully loads custom wordlists from GitHub repos. Tested with SecLists common.txt (loaded 4749 words vs 500 default). Supports multiple repository URLs and combines with default wordlists."
 
   - task: "Improve verbose mode with 4-second display then progress bar"
     implemented: true
