@@ -538,11 +538,15 @@ class AiDirFuzz:
         self.keyboard_listener = KeyboardListener(self.logger)
         
         # Set verbose mode from config
-        self.logger.verbose = config.verbose
+        if config.verbose:
+            self.logger.verbose = True
         
         # Initialize AI analyzer if API key is provided
-        if config.gemini_api_key and config.ai_analysis:
+        if config.gemini_api_key and config.ai_analysis and config.gemini_api_key.strip():
             self.ai_analyzer = AIAnalyzer(config.gemini_api_key, config.gemini_model, self.logger)
+        else:
+            if config.ai_analysis:
+                self.logger.log("AI analysis disabled: no API key provided", "warning")
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
