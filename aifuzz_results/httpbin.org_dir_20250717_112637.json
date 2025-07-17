@@ -1,0 +1,52 @@
+{
+  "scan_metadata": {
+    "target_url": "https://httpbin.org",
+    "scan_mode": "dir",
+    "scan_date": "2025-07-17T11:26:37.361994",
+    "wordlist_size": "small",
+    "concurrent_requests": 5,
+    "total_requests": 428,
+    "interesting_results": 3,
+    "scan_duration": 27.814112663269043,
+    "ai_analysis_enabled": false,
+    "version": "1.1.0"
+  },
+  "results": [
+    {
+      "url": "https://httpbin.org/xml",
+      "method": "GET",
+      "status_code": 200,
+      "content_length": 522,
+      "content_type": "application/xml",
+      "response_time": 227.6155948638916,
+      "redirect_url": "https://httpbin.org/xml",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T11:26:09.973200"
+    },
+    {
+      "url": "https://httpbin.org/robots.txt",
+      "method": "GET",
+      "status_code": 200,
+      "content_length": 30,
+      "content_type": "text/plain",
+      "response_time": 38.91873359680176,
+      "redirect_url": "https://httpbin.org/robots.txt",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T11:26:28.422729"
+    },
+    {
+      "url": "https://httpbin.org/put",
+      "method": "GET",
+      "status_code": 405,
+      "content_length": 178,
+      "content_type": "text/html",
+      "response_time": 32.18340873718262,
+      "redirect_url": "https://httpbin.org/put",
+      "ai_analysis": null,
+      "vulnerability_score": 0.0,
+      "timestamp": "2025-07-17T11:26:32.282636"
+    }
+  ]
+}
