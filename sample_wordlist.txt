@@ -1,0 +1,6 @@
+get
+post
+delete
+admin
+test
+robots.txt
