@@ -533,8 +533,19 @@ class ImprovedFuzzer:
                 
                 # Load wordlist
                 if config.get('custom_wordlist'):
+                    self.logger.log("Loading custom wordlist from file", "info")
                     wordlist = self._load_custom_wordlist(config['custom_wordlist'])
+                elif config.get('github_repos'):
+                    self.logger.log("Loading custom wordlist from GitHub", "info")
+                    # If github_repos is provided, only load from there
+                    all_words = set()
+                    for repo_url in config['github_repos']:
+                        words = await fetcher.fetch_custom_wordlist(repo_url)
+                        all_words.update(words)
+                    wordlist = list(all_words)
                 else:
+                    # Otherwise, load the default wordlists
+                    self.logger.log("Loading default wordlists from SecLists", "info")
                     wordlist = await fetcher.get_combined_wordlist(
                         config['mode'], 
                         config.get('wordlist_size', 'medium')
@@ -624,7 +635,9 @@ class ImprovedFuzzer:
             elif config['mode'] == 'param':
                 test_url = f"{target_url}?{word}=test"
             elif config['mode'] == 'api':
-                test_url = f"{target_url}/api/{word}"
+                prefix = config.get('api_path_prefix', '/api/')
+                path = f"{prefix.strip('/')}/{word}"
+                test_url = urljoin(f"{target_url}/", path)
             else:  # hybrid
                 # Test as directory, parameter, and API
                 for mode in ['dir', 'param', 'api']:
@@ -647,6 +660,7 @@ class ImprovedFuzzer:
     
     async def _test_url(self, url: str, config: Dict[str, Any]):
         """Test a single URL with improved error handling"""
+        self.logger.log(f"Testing: {url}", level="info")
         try:
             headers = {
                 'User-Agent': config.get('user_agent', 'AiFuzz/1.2.0 (Security Scanner)'),
@@ -1128,6 +1142,8 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
     parser.add_argument("--wizard", action="store_true", help="Interactive wizard mode")
     parser.add_argument("--user-agent", default="AiFuzz/1.2.0 (Security Scanner)", 
                        help="Custom User-Agent")
+    parser.add_argument("--api-path-prefix", default="/api/",
+                          help="Prefix for API endpoints in 'api' mode (default: /api/)")
     parser.add_argument("--version", action="version", version="AiDirFuzz 1.2.0")
     
     args = parser.parse_args()
@@ -1178,7 +1194,8 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
             'proxy': args.proxy,
             'ssl_verify': not args.no_ssl_verify,
             'status_codes': args.status_codes,
-            'user_agent': args.user_agent
+            'user_agent': args.user_agent,
+            'api_path_prefix': args.api_path_prefix
         }
     
     # Load configuration

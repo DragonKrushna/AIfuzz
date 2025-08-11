@@ -1,0 +1,21 @@
+[
+  {
+    "url": "https://httpbin.org/get",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 316,
+    "content_type": "application/json",
+    "response_time": 0.16887187957763672,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 09:19:22 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "316",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  }
+]
