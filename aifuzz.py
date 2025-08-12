@@ -1012,7 +1012,7 @@ def save_results(results: List[ScanResult], output_file: str, output_format: str
     """Save scan results to file"""
     try:
         # Create results directory
-        results_dir = Path("aifuzz_results")
+        results_dir = Path("results")
         results_dir.mkdir(exist_ok=True)
         
         # Generate filename if not provided
@@ -1132,7 +1132,7 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
                        help="Status codes to show (default: 200 201 204 301 302 307 308 403 405 500)")
     parser.add_argument("-o", "--output", help="Output file path (default: auto-generated in aifuzz_results/)")
     parser.add_argument("-f", "--format", choices=["json", "csv", "txt"], 
-                       default="json", help="Output format (default: json)")
+                       default="csv", help="Output format (default: csv)")
     parser.add_argument("--headers", nargs="+", help="Custom headers (format: 'Header:Value')")
     parser.add_argument("--cookies", nargs="+", help="Custom cookies (format: 'name=value')")
     parser.add_argument("--proxy", help="Proxy URL (http://proxy:port)")
@@ -1231,7 +1231,16 @@ Results are automatically saved to aifuzz_results/ folder with filename format:
             
             # Save results
             if results:
-                save_results(results, config['output_file'], config['output_format'])
+                formats_to_save = [config['output_format']]
+                if config['output_format'] == 'json':
+                    formats_to_save.append('csv')
+
+                for fmt in formats_to_save:
+                    output_file = config['output_file']
+                    if output_file:
+                        # Ensure the output file has the correct extension
+                        output_file = str(Path(output_file).with_suffix(f'.{fmt}'))
+                    save_results(results, output_file, fmt)
             
             # Show summary
             scan_time = time.time() - fuzzer.start_time
