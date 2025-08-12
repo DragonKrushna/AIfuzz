@@ -38,6 +38,7 @@ class StatusCheckCreate(BaseModel):
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
+    logger.info("Received request to /api/")
     return {"message": "Hello World"}
 
 @api_router.post("/status", response_model=StatusCheck)
@@ -64,11 +65,17 @@ app.add_middleware(
 )
 
 # Configure logging
+log_file_path = ROOT_DIR / "backend.log"
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file_path),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
+logger.info("Logging configured to file and stream")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

@@ -29,7 +29,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Any, Set
 from dataclasses import dataclass, asdict
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode
+from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
 import base64
 import hashlib
 import re
@@ -628,10 +628,13 @@ class ImprovedFuzzer:
     async def _scan_single_word(self, word: str, config: Dict[str, Any]):
         """Scan a single word with improved error handling"""
         try:
-            target_url = config['url'].rstrip('/')
-            
+            target_url = config['url']
+
             if config['mode'] == 'dir':
-                test_url = f"{target_url}/{word}"
+                # For dir mode, we want to ignore the query string of the base URL
+                parsed_url = urlparse(target_url)
+                base_url = urlunparse(parsed_url._replace(query="", fragment=""))
+                test_url = urljoin(base_url, word)
             elif config['mode'] == 'param':
                 test_url = f"{target_url}?{word}=test"
             elif config['mode'] == 'api':

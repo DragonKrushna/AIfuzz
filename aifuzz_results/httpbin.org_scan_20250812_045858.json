@@ -1,0 +1,293 @@
+[
+  {
+    "url": "https://httpbin.org/delete",
+    "method": "GET",
+    "status_code": 405,
+    "content_length": 178,
+    "content_type": "text/html",
+    "response_time": 1.690429925918579,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 09:46:08 GMT",
+      "Content-Type": "text/html",
+      "Content-Length": "178",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Allow": "OPTIONS, DELETE",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/ip",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 32,
+    "content_type": "application/json",
+    "response_time": 1.2886159420013428,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 09:47:54 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "32",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/html",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 3741,
+    "content_type": "text/html; charset=utf-8",
+    "response_time": 1.188269853591919,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:09:22 GMT",
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": "3741",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/post",
+    "method": "GET",
+    "status_code": 405,
+    "content_length": 178,
+    "content_type": "text/html",
+    "response_time": 1.837784767150879,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:11:22 GMT",
+      "Content-Type": "text/html",
+      "Content-Length": "178",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Allow": "POST, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/cache",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 318,
+    "content_type": "application/json",
+    "response_time": 0.030100345611572266,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:12:53 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "318",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Last-Modified": "Mon, 11 Aug 2025 11:12:53 GMT",
+      "Etag": "b1562d1b2e3b47e4bde28ba92d52d7b3",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/headers",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 234,
+    "content_type": "application/json",
+    "response_time": 1.1403779983520508,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:29:18 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "234",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/get",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 316,
+    "content_type": "application/json",
+    "response_time": 2.4063167572021484,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:43:30 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "316",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/gzip",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 239,
+    "content_type": "application/json",
+    "response_time": 0.3036537170410156,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:48:55 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "239",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Content-Encoding": "gzip",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/xml",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 522,
+    "content_type": "application/xml",
+    "response_time": 0.9135448932647705,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:53:57 GMT",
+      "Content-Type": "application/xml",
+      "Content-Length": "522",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/legacy",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 14270,
+    "content_type": "text/html; charset=utf-8",
+    "response_time": 0.6461195945739746,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:54:27 GMT",
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": "14270",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/patch",
+    "method": "GET",
+    "status_code": 405,
+    "content_length": 178,
+    "content_type": "text/html",
+    "response_time": 0.7240893840789795,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 11:56:07 GMT",
+      "Content-Type": "text/html",
+      "Content-Length": "178",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Allow": "PATCH, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/cookies",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 20,
+    "content_type": "application/json",
+    "response_time": 0.031171321868896484,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Mon, 11 Aug 2025 12:00:26 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "20",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/uuid",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 53,
+    "content_type": "application/json",
+    "response_time": 0.03228878974914551,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Tue, 12 Aug 2025 04:53:01 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "53",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/anything",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 404,
+    "content_type": "application/json",
+    "response_time": 0.03260064125061035,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Tue, 12 Aug 2025 04:53:09 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "404",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  },
+  {
+    "url": "https://httpbin.org/json",
+    "method": "GET",
+    "status_code": 200,
+    "content_length": 429,
+    "content_type": "application/json",
+    "response_time": 0.031259775161743164,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Tue, 12 Aug 2025 04:54:40 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "429",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  }
+]

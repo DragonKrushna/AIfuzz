@@ -1,0 +1,21 @@
+[
+  {
+    "url": "https://httpbin.org/basic-auth/user/passwd",
+    "method": "GET",
+    "status_code": 401,
+    "content_length": 0,
+    "content_type": "",
+    "response_time": 0.14952349662780762,
+    "ai_analysis": "",
+    "ai_score": 0.0,
+    "headers": {
+      "Date": "Tue, 12 Aug 2025 05:02:52 GMT",
+      "Content-Length": "0",
+      "Connection": "keep-alive",
+      "Server": "gunicorn/19.9.0",
+      "WWW-Authenticate": "Basic realm=\"Fake Realm\"",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true"
+    }
+  }
+]
